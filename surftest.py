@@ -9,8 +9,9 @@ FLANN_MATCH_COUNT_SENS = 20 #11
 COMPARE_SENS = 9#9
 
 beerimgpath = './beer/laces_0.jpg'
-beerframeimgpath = './beerframe/hltipa_0.jpg'
 beerimg = cv.imread(beerimgpath)
+
+beerframeimgpath = './beerframe/hltipa_0.jpg'
 beerframeimg = cv.imread(beerframeimgpath)
 
 surf = cv.xfeatures2d.SURF_create(HESSIAN_THRESHOLD)
