@@ -2,12 +2,11 @@ import numpy as np
 import cv2 as cv
 
 SHOW_CAMERA = False
-HESSIAN_THRESHOLD = 300#200
-FRAME_RESIZE_FACTOR = 2#3
-TEMPLATE_RESIZE_FACTOR = 1#2
-FLANN_DISTANCE_SENS = 0.75#0.75
-FLANN_MATCH_COUNT_SENS = 20 #11
-COMPARE_SENS = 9#9
+VERBOSE = True
+HESSIAN_THRESHOLD = 300
+FLANN_DISTANCE_SENS = 0.75
+FLANN_MATCH_COUNT_SENS = 16
+COMPARE_SENS = 9
 
 IMGPATH_HLTIPA = './beer/hltipa_0.jpg'
 IMGPATH_LACES = './beer/laces_0.jpg'
@@ -17,6 +16,29 @@ def learnbeer():
     print("Learning beer...")
 
     print("Learned .")
+
+def decide_beer(thinkaboutit):
+    #thinkaboutit is [len(good_hltipa),len(good_laces),len(good_stella)]
+    best_score = max(thinkaboutit)
+    score_a = thinkaboutit[0]
+    score_b = thinkaboutit[1]
+    score_c = thinkaboutit[2]
+
+    if best_score >= FLANN_MATCH_COUNT_SENS:
+        if score_a == best_score:
+            if (score_b < COMPARE_SENS) and (score_c < COMPARE_SENS):
+                return "HLT IPA"
+        elif score_b == best_score:
+            if (score_c < COMPARE_SENS) and (score_a < COMPARE_SENS):
+                return "LACES"
+        elif score_c == best_score:
+            if (score_a < COMPARE_SENS) and (score_b < COMPARE_SENS):
+                return "STELLA"
+        else:
+            return "IDK"
+    #otherwise we saw nothing
+    else: 
+        return "IDK"
 
 def qualifying_matches(matches):
     good = []
@@ -62,21 +84,23 @@ def main():
         good_hltipa = qualifying_matches(matches_hltipa)
         good_laces = qualifying_matches(matches_laces)
         good_stella = qualifying_matches(matches_stella)
+        if VERBOSE:
+            print(f"hltipa:{len(good_hltipa)}")
+            print(f"laces:{len(good_laces)}")
+            print(f"stella:{len(good_stella)}")
         #determine best match
         print("-------------------------------")
-        print(f"hltipa:{len(good_hltipa)}")
-        print(f"laces:{len(good_laces)}")
-        print(f"stella:{len(good_stella)}")
+        thinkaboutit = [len(good_hltipa), len(good_laces), len(good_stella)]
+        isaw = decide_beer(thinkaboutit)
+        print(isaw)
 
         if SHOW_CAMERA:
             cv.imshow('frame', frame)
 
         e2 = cv.getTickCount()
         time = (e2 - e1)/ cv.getTickFrequency()
-        print(f"{1/time} fps")
-
-        if cv.waitKey(1) == ord('q'):
-            break
+        if VERBOSE:
+            print(f"{1/time} fps")
 
     # When everything done, release the capture
     cap.release()
